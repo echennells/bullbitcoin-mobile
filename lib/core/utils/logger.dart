@@ -7,7 +7,7 @@ export 'package:logging_colorful/logging_colorful.dart';
 // DONE: add a String encryptionKey to the Logger
 // Update the log method to take optional write to file param; if it is true it will write to a file. if an encryptionKey exists, it will encrypt the file.
 
-Logger log = Logger.init();
+late Logger log;
 
 class Logger {
   final Directory dir;
@@ -73,7 +73,10 @@ class Logger {
         fine('Logs created');
       }
     } catch (e) {
-      severe('Logs existence: $e');
+      if (kDebugMode) {
+        debugPrint('⚠️ Could not create log file at ${logsFile.path}: $e');
+      }
+      // Don't rethrow - allow app to continue without logging
     }
   }
 
@@ -145,7 +148,14 @@ class Logger {
   }
 
   Future<void> appendToLogFile(String log) async {
-    await logsFile.writeAsString('$log\n', mode: FileMode.append);
+    try {
+      await logsFile.writeAsString('$log\n', mode: FileMode.append);
+    } catch (e) {
+      // Silently fail if we can't write logs - don't crash the app
+      if (kDebugMode) {
+        debugPrint('Failed to write log: $e');
+      }
+    }
   }
 
   Future<void> deleteLogs() async {

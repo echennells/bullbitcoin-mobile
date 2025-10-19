@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:ark_wallet/ark_wallet.dart';
 import 'package:bb_mobile/bloc_observer.dart';
@@ -26,18 +27,44 @@ import 'package:payjoin_flutter/common.dart';
 
 class Bull {
   static Future<void> init() async {
+    // Load .env first with error handling
+    try {
+      await dotenv.load(isOptional: true);
+      print('✅ .env loaded successfully');
+    } catch (e) {
+      print('⚠️ .env load failed (continuing anyway): $e');
+    }
+
     await Future.wait([
       LibLwk.init(),
       BoltzCore.init(),
       PConfig.initializeApp(),
-      dotenv.load(isOptional: true),
       LibBbqr.init(),
       LibArk.init(),
     ]);
 
-    final logDirectory = await getApplicationDocumentsDirectory();
-    log = Logger.init(directory: logDirectory);
-    await log.ensureLogsExist();
+    Directory logDirectory;
+    try {
+      logDirectory = await getApplicationDocumentsDirectory();
+      print('========================================');
+      print('LOG DIRECTORY PATH: ${logDirectory.path}');
+      print('LOG DIRECTORY ABSOLUTE: ${logDirectory.absolute.path}');
+      print('========================================');
+    } catch (e) {
+      print('ERROR getting documents directory: $e');
+      logDirectory = Directory.systemTemp;
+    }
+
+    try {
+      log = Logger.init(directory: logDirectory);
+      await log.ensureLogsExist();
+      print('✅ Logger initialized at: ${logDirectory.path}');
+    } catch (e) {
+      print('❌ Logger failed: $e');
+      // Fallback: create logger with a safe temporary directory
+      log = Logger.init(directory: Directory.systemTemp);
+      print('⚠️ Fallback to temp: ${Directory.systemTemp.path}');
+    }
 
     // The Locator setup might depend on the initialization of the libraries above
     //  so it's important to call it after the initialization
@@ -54,7 +81,13 @@ Future main() async {
       runApp(const BullBitcoinWalletApp());
     },
     (error, stack) {
-      log.severe(error, trace: stack);
+      // Check if logger is initialized before using it
+      try {
+        log.severe(error, trace: stack);
+      } catch (e) {
+        // Logger not initialized yet, use debugPrint instead
+        debugPrint('FATAL ERROR (logger not ready): $error\n$stack');
+      }
     },
   );
 }
