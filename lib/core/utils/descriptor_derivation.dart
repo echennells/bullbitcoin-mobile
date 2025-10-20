@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bb_mobile/core/utils/bip32_derivation.dart';
 import 'package:bb_mobile/core/wallet/domain/entities/wallet.dart';
 import 'package:bdk_flutter/bdk_flutter.dart' as bdk;
@@ -64,7 +66,15 @@ class DescriptorDerivation {
     // since LWK doesn't support custom derivation paths via newConfidential
     final network =
         isTestnet ? Network.liquidTestnet : Network.liquidMainnet;
-    final seedBytes = bip39.mnemonicToSeed(mnemonic);
+
+    // Convert mnemonic string to list of words and then to seed bytes
+    final mnemonicWords = mnemonic.split(' ');
+    final seedBytes = Uint8List.fromList(
+      bip39.Mnemonic.fromWords(
+        words: mnemonicWords,
+        passphrase: '',
+      ).seed,
+    );
 
     // Derive the account xpub for the specified script type
     final accountXpub = await Bip32Derivation.getAccountXpub(
