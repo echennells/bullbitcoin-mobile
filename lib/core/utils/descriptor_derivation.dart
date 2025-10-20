@@ -2,7 +2,7 @@ import 'package:bb_mobile/core/utils/bip32_derivation.dart';
 import 'package:bb_mobile/core/wallet/domain/entities/wallet.dart';
 import 'package:bdk_flutter/bdk_flutter.dart' as bdk;
 import 'package:bip32_keys/bip32_keys.dart' as bip32;
-import 'package:bip39/bip39.dart' as bip39;
+import 'package:bip39_mnemonic/bip39_mnemonic.dart' as bip39;
 import 'package:lwk/lwk.dart' as lwk;
 
 class DescriptorDerivation {
