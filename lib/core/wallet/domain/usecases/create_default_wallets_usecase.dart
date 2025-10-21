@@ -74,9 +74,54 @@ class CreateDefaultWalletsUsecase {
         ),
       ]);
 
-      log.fine('Default wallets created');
+      final allWallets = List<Wallet>.from(defaultWallets);
 
-      return defaultWallets;
+      // For Liquid, also check BIP49 (legacy Aqua compatibility)
+      // Only check if this is a wallet recovery (mnemonicWords provided)
+      if (mnemonicWords != null) {
+        Wallet? legacyLiquidWallet;
+        try {
+          legacyLiquidWallet = await _wallet.createWallet(
+            seed: seed,
+            network: liquidNetwork,
+            scriptType: ScriptType.bip49,
+            isDefault: false,
+            birthday: birthday,
+            sync: true,
+          );
+
+          // Only keep the wallet if it has a non-zero balance
+          if (legacyLiquidWallet.balanceSat > BigInt.zero) {
+            allWallets.add(legacyLiquidWallet);
+            log.fine(
+              'Legacy BIP49 Liquid wallet found: ${legacyLiquidWallet.derivationPath} '
+              '(balance: ${legacyLiquidWallet.balanceSat})',
+            );
+            log.warning(
+              'Imported legacy BIP49 Liquid wallet. '
+              'Consider migrating to BIP84 for lower transaction fees.',
+            );
+          } else {
+            // Delete empty wallet to avoid cluttering the database
+            await _wallet.deleteWallet(walletId: legacyLiquidWallet.id);
+            log.fine('No funds found in BIP49 Liquid wallet');
+          }
+        } catch (e) {
+          log.warning('Failed to check BIP49 Liquid wallet: $e');
+          // Clean up the wallet if it was created but failed later
+          if (legacyLiquidWallet != null) {
+            try {
+              await _wallet.deleteWallet(walletId: legacyLiquidWallet.id);
+            } catch (deleteError) {
+              log.warning('Failed to delete failed wallet: $deleteError');
+            }
+          }
+        }
+      }
+
+      log.fine('Wallets created: ${allWallets.length} total');
+
+      return allWallets;
     } catch (e) {
       throw CreateDefaultWalletsException(e.toString());
     }
