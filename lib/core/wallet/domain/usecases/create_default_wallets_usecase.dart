@@ -81,6 +81,7 @@ class CreateDefaultWalletsUsecase {
       if (mnemonicWords != null) {
         Wallet? legacyLiquidWallet;
         try {
+          // Create as non-default first to avoid conflict with BIP84 wallet
           legacyLiquidWallet = await _wallet.createWallet(
             seed: seed,
             network: liquidNetwork,
@@ -92,10 +93,28 @@ class CreateDefaultWalletsUsecase {
 
           // Only keep the wallet if it has a non-zero balance
           if (legacyLiquidWallet.balanceSat > BigInt.zero) {
-            allWallets.add(legacyLiquidWallet);
+            // User has funds in BIP49 - delete BIP84 and recreate BIP49 as default
+            final bip84LiquidWallet = defaultWallets[1]; // Index 1 is Liquid
+            await _wallet.deleteWallet(walletId: bip84LiquidWallet.id);
+
+            // Delete the non-default BIP49 wallet
+            await _wallet.deleteWallet(walletId: legacyLiquidWallet.id);
+
+            // Recreate BIP49 as the default Liquid wallet
+            final defaultBip49Wallet = await _wallet.createWallet(
+              seed: seed,
+              network: liquidNetwork,
+              scriptType: ScriptType.bip49,
+              isDefault: true,
+              birthday: birthday,
+              sync: true,
+            );
+
+            allWallets[1] = defaultBip49Wallet;
+
             log.fine(
-              'Legacy BIP49 Liquid wallet found: ${legacyLiquidWallet.derivationPath} '
-              '(balance: ${legacyLiquidWallet.balanceSat})',
+              'Legacy BIP49 Liquid wallet found: ${defaultBip49Wallet.derivationPath} '
+              '(balance: ${defaultBip49Wallet.balanceSat})',
             );
             log.warning(
               'Imported legacy BIP49 Liquid wallet. '

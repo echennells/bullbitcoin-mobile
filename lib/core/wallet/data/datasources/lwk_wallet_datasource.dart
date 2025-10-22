@@ -88,7 +88,11 @@ class LwkWalletDatasource {
         );
         //debugPrint('[Sync] Sync completed for wallet: ${wallet.id}');
       } catch (e) {
+        print('[LWK SYNC ERROR] Wallet: ${wallet.id}');
+        print('[LWK SYNC ERROR] Error type: ${e.runtimeType}');
+        print('[LWK SYNC ERROR] Error message: $e');
         if (e is lwk.LwkError) {
+          print('[LWK SYNC ERROR] LwkError.msg: ${e.msg}');
           throw e.msg;
         } else {
           rethrow;
@@ -543,6 +547,7 @@ class LwkWalletDatasource {
       }
       final network =
           walletModel.isTestnet ? lwk.Network.testnet : lwk.Network.mainnet;
+      print('[DEBUG] Creating LWK wallet with descriptor: ${walletModel.combinedCtDescriptor}');
       final descriptor = lwk.Descriptor(
         ctDescriptor: walletModel.combinedCtDescriptor,
       );

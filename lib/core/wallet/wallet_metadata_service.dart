@@ -144,6 +144,7 @@ class WalletMetadataService {
             scriptType: scriptType,
             isTestnet: network.isTestnet,
           );
+      print('[DEBUG] Liquid descriptor generated: $descriptor');
       changeDescriptor = descriptor;
     }
 
@@ -157,7 +158,10 @@ class WalletMetadataService {
       xpubFingerprint: xpub.fingerprintHex,
       signer: Signer.local,
       signerDevice: null,
-      xpub: xpub.convert(scriptType.getXpubType(network)),
+      // For Liquid, always use standard xpub format (LWK doesn't support ypub/zpub)
+      xpub: network.isLiquid
+          ? xpub.toBase58()
+          : xpub.convert(scriptType.getXpubType(network)),
       externalPublicDescriptor: descriptor,
       internalPublicDescriptor: changeDescriptor,
       isDefault: isDefault,
