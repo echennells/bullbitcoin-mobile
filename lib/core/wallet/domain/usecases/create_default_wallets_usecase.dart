@@ -44,7 +44,7 @@ class CreateDefaultWalletsUsecase {
       );
 
       // The current default script type for the wallets is BIP84
-      const scriptType = ScriptType.bip84;
+      const bitcoinScriptType = ScriptType.bip84;
 
       // Get the current environment to determine the network
       final settings = await _settingsRepository.fetch();
@@ -56,33 +56,13 @@ class CreateDefaultWalletsUsecase {
       final liquidNetwork =
           environment.isMainnet ? Network.liquidMainnet : Network.liquidTestnet;
 
-      // The default wallets should be 1 Bitcoin and 1 Liquid wallet.
-      final defaultWallets = await Future.wait([
-        _wallet.createWallet(
-          seed: seed,
-          network: bitcoinNetwork,
-          scriptType: scriptType,
-          isDefault: true,
-          birthday: birthday,
-        ),
-        _wallet.createWallet(
-          seed: seed,
-          network: liquidNetwork,
-          scriptType: scriptType,
-          isDefault: true,
-          birthday: birthday,
-        ),
-      ]);
-
-      final allWallets = List<Wallet>.from(defaultWallets);
-
-      // For Liquid, also check BIP49 (legacy Aqua compatibility)
-      // Only check if this is a wallet recovery (mnemonicWords provided)
+      // For Liquid wallets during recovery, check if user has legacy BIP49 (Aqua) funds
+      ScriptType liquidScriptType = ScriptType.bip84;
       if (mnemonicWords != null) {
-        Wallet? legacyLiquidWallet;
+        // Wallet recovery - check BIP49 first for Aqua compatibility
+        Wallet? testBip49Wallet;
         try {
-          // Create as non-default first to avoid conflict with BIP84 wallet
-          legacyLiquidWallet = await _wallet.createWallet(
+          testBip49Wallet = await _wallet.createWallet(
             seed: seed,
             network: liquidNetwork,
             scriptType: ScriptType.bip49,
@@ -91,52 +71,53 @@ class CreateDefaultWalletsUsecase {
             sync: true,
           );
 
-          // Only keep the wallet if it has a non-zero balance
-          if (legacyLiquidWallet.balanceSat > BigInt.zero) {
-            // User has funds in BIP49 - delete BIP84 and recreate BIP49 as default
-            final bip84LiquidWallet = defaultWallets[1]; // Index 1 is Liquid
-            await _wallet.deleteWallet(walletId: bip84LiquidWallet.id);
-
-            // Delete the non-default BIP49 wallet
-            await _wallet.deleteWallet(walletId: legacyLiquidWallet.id);
-
-            // Recreate BIP49 as the default Liquid wallet
-            final defaultBip49Wallet = await _wallet.createWallet(
-              seed: seed,
-              network: liquidNetwork,
-              scriptType: ScriptType.bip49,
-              isDefault: true,
-              birthday: birthday,
-              sync: true,
-            );
-
-            allWallets[1] = defaultBip49Wallet;
-
+          if (testBip49Wallet.balanceSat > BigInt.zero) {
+            // User has funds in BIP49 - use it as the default Liquid wallet type
+            liquidScriptType = ScriptType.bip49;
             log.fine(
-              'Legacy BIP49 Liquid wallet found: ${defaultBip49Wallet.derivationPath} '
-              '(balance: ${defaultBip49Wallet.balanceSat})',
+              'Detected BIP49 Liquid wallet with balance: ${testBip49Wallet.balanceSat}',
             );
             log.warning(
-              'Imported legacy BIP49 Liquid wallet. '
+              'Importing legacy BIP49 Liquid wallet (Aqua compatibility). '
               'Consider migrating to BIP84 for lower transaction fees.',
             );
           } else {
-            // Delete empty wallet to avoid cluttering the database
-            await _wallet.deleteWallet(walletId: legacyLiquidWallet.id);
-            log.fine('No funds found in BIP49 Liquid wallet');
+            log.fine('No funds in BIP49 Liquid wallet, using BIP84');
           }
+
+          // Clean up test wallet
+          await _wallet.deleteWallet(walletId: testBip49Wallet.id);
         } catch (e) {
           log.warning('Failed to check BIP49 Liquid wallet: $e');
-          // Clean up the wallet if it was created but failed later
-          if (legacyLiquidWallet != null) {
+          if (testBip49Wallet != null) {
             try {
-              await _wallet.deleteWallet(walletId: legacyLiquidWallet.id);
+              await _wallet.deleteWallet(walletId: testBip49Wallet.id);
             } catch (deleteError) {
-              log.warning('Failed to delete failed wallet: $deleteError');
+              log.warning('Failed to delete test wallet: $deleteError');
             }
           }
+          // Fall back to BIP84 if check fails
+          liquidScriptType = ScriptType.bip84;
         }
       }
+
+      // Create default wallets with the determined script types
+      final allWallets = await Future.wait([
+        _wallet.createWallet(
+          seed: seed,
+          network: bitcoinNetwork,
+          scriptType: bitcoinScriptType,
+          isDefault: true,
+          birthday: birthday,
+        ),
+        _wallet.createWallet(
+          seed: seed,
+          network: liquidNetwork,
+          scriptType: liquidScriptType,
+          isDefault: true,
+          birthday: birthday,
+        ),
+      ]);
 
       log.fine('Wallets created: ${allWallets.length} total');
 
