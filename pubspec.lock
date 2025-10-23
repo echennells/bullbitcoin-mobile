@@ -733,13 +733,13 @@ packages:
     source: hosted
     version: "2.0.31"
   flutter_rust_bridge:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: flutter_rust_bridge
-      sha256: "5a5c7a5deeef2cc2ffe6076a33b0429f4a20ceac22a397297aed2b1eb067e611"
+      sha256: "37ef40bc6f863652e865f0b2563ea07f0d3c58d8efad803cc01933a4b2ee067e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.9.0"
+    version: "2.11.1"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -1260,11 +1260,10 @@ packages:
   lwk:
     dependency: "direct main"
     description:
-      name: lwk
-      sha256: e9c790d2e6d10fa672838651951d6f0a853ea8b726acf3af7c54d9a2e712f95e
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.1"
+      path: "../lwk-dart"
+      relative: true
+    source: path
+    version: "0.2.2"
   matcher:
     dependency: transitive
     description:

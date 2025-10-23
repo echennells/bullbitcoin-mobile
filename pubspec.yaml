@@ -51,7 +51,8 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   boltz: 0.2.1
-  lwk: 0.2.1
+  lwk:
+    path: ../lwk-dart
   json_annotation: ^4.9.0
   flutter_localizations:
     sdk: flutter
@@ -159,3 +160,9 @@ flutter_launcher_icons:
   min_sdk_android: 21 # android min sdk min:16, default 21
   adaptive_icon_background: "#FBFBFB"
   adaptive_icon_foreground: "assets/misc/iconnew-red.png"
+
+dependency_overrides:
+  lwk:
+    path: ../lwk-dart
+  flutter_rust_bridge: 2.11.1
+
