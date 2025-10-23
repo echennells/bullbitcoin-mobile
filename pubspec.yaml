@@ -87,9 +87,7 @@ dependencies:
   font_awesome_flutter: ^10.8.0
   bolt11_decoder: ^1.0.2
   dart_bbqr:
-    git:
-      url: https://github.com/SatoshiPortal/bbqr-dart.git
-      ref: 348feb8db3dd00260f17da9f7d850301cb899a87
+    path: ../bbqr-dart
   sliver_tools: ^0.2.12
   logging_colorful: ^1.3.0
   timelines_plus: ^1.0.7
@@ -167,5 +165,7 @@ dependency_overrides:
     path: ../boltz-dart
   payjoin_flutter:
     path: ../payjoin-flutter
+  dart_bbqr:
+    path: ../bbqr-dart
   flutter_rust_bridge: 2.11.1
 

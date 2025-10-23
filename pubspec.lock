@@ -470,11 +470,9 @@ packages:
   dart_bbqr:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "348feb8db3dd00260f17da9f7d850301cb899a87"
-      resolved-ref: "348feb8db3dd00260f17da9f7d850301cb899a87"
-      url: "https://github.com/SatoshiPortal/bbqr-dart.git"
-    source: git
+      path: "../bbqr-dart"
+      relative: true
+    source: path
     version: "0.0.1"
   dart_style:
     dependency: transitive
