@@ -52,11 +52,9 @@ packages:
   ark_wallet:
     dependency: "direct main"
     description:
-      path: "."
-      ref: c65383ef05a2d622ccb915286e8a1da9ae9ff00f
-      resolved-ref: c65383ef05a2d622ccb915286e8a1da9ae9ff00f
-      url: "https://github.com/SatoshiPortal/dart-ark-wallet"
-    source: git
+      path: "../dart-ark-wallet"
+      relative: true
+    source: path
     version: "0.0.1"
   async:
     dependency: "direct main"
