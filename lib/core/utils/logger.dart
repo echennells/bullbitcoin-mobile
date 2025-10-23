@@ -7,7 +7,7 @@ export 'package:logging_colorful/logging_colorful.dart';
 // DONE: add a String encryptionKey to the Logger
 // Update the log method to take optional write to file param; if it is true it will write to a file. if an encryptionKey exists, it will encrypt the file.
 
-late Logger log;
+Logger log = Logger.init();
 
 class Logger {
   final Directory dir;
@@ -37,7 +37,7 @@ class Logger {
       final (:String error, :String trace) = record.stringifyErrorAndTrace();
       content.addAll([error, trace]);
 
-      final sanitizedContent = content.map((e) => _sanitize(e)).toList();
+      final sanitizedContent = content.map((e) => logger.sanitize(e)).toList();
       final tsvLine = sanitizedContent.join('\t');
 
       // We don't want to keep the info session in memory, they should be written to file
@@ -73,10 +73,7 @@ class Logger {
         fine('Logs created');
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('⚠️ Could not create log file at ${logsFile.path}: $e');
-      }
-      // Don't rethrow - allow app to continue without logging
+      severe('Logs existence: $e');
     }
   }
 
@@ -148,24 +145,11 @@ class Logger {
   }
 
   Future<void> appendToLogFile(String log) async {
-    try {
-      await logsFile.writeAsString('$log\n', mode: FileMode.append);
-    } catch (e) {
-      // Silently fail if we can't write logs - don't crash the app
-      if (kDebugMode) {
-        debugPrint('Failed to write log: $e');
-      }
-    }
+    await logsFile.writeAsString('$log\n', mode: FileMode.append);
   }
 
   Future<void> deleteLogs() async {
     await logsFile.writeAsString('');
     log.shout('Logs deleted');
-  }
-
-  String _sanitize(String input) {
-    final colors = RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'); // ascii colors
-    final tabNewLine = RegExp(r'[\t\n\r]');
-    return input.replaceAll(tabNewLine, ' ').replaceAll(colors, '');
   }
 }

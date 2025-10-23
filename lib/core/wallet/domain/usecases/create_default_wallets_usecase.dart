@@ -60,44 +60,29 @@ class CreateDefaultWalletsUsecase {
       ScriptType liquidScriptType = ScriptType.bip84;
       if (mnemonicWords != null) {
         // Wallet recovery - check BIP49 first for Aqua compatibility
-        Wallet? testBip49Wallet;
-        try {
-          testBip49Wallet = await _wallet.createWallet(
-            seed: seed,
-            network: liquidNetwork,
-            scriptType: ScriptType.bip49,
-            isDefault: false,
-            birthday: birthday,
-            sync: true,
+        final testBip49Wallet = await _wallet.createWallet(
+          seed: seed,
+          network: liquidNetwork,
+          scriptType: ScriptType.bip49,
+          isDefault: false,
+          birthday: birthday,
+          sync: true,
+        );
+
+        final hasFunds = testBip49Wallet.balanceSat > BigInt.zero;
+        await _wallet.deleteWallet(walletId: testBip49Wallet.id);
+
+        if (hasFunds) {
+          liquidScriptType = ScriptType.bip49;
+          log.fine(
+            'Detected BIP49 Liquid wallet with balance: ${testBip49Wallet.balanceSat}',
           );
-
-          if (testBip49Wallet.balanceSat > BigInt.zero) {
-            // User has funds in BIP49 - use it as the default Liquid wallet type
-            liquidScriptType = ScriptType.bip49;
-            log.fine(
-              'Detected BIP49 Liquid wallet with balance: ${testBip49Wallet.balanceSat}',
-            );
-            log.warning(
-              'Importing legacy BIP49 Liquid wallet (Aqua compatibility). '
-              'Consider migrating to BIP84 for lower transaction fees.',
-            );
-          } else {
-            log.fine('No funds in BIP49 Liquid wallet, using BIP84');
-          }
-
-          // Clean up test wallet
-          await _wallet.deleteWallet(walletId: testBip49Wallet.id);
-        } catch (e) {
-          log.warning('Failed to check BIP49 Liquid wallet: $e');
-          if (testBip49Wallet != null) {
-            try {
-              await _wallet.deleteWallet(walletId: testBip49Wallet.id);
-            } catch (deleteError) {
-              log.warning('Failed to delete test wallet: $deleteError');
-            }
-          }
-          // Fall back to BIP84 if check fails
-          liquidScriptType = ScriptType.bip84;
+          log.warning(
+            'Importing legacy BIP49 Liquid wallet (Aqua compatibility). '
+            'Consider migrating to BIP84 for lower transaction fees.',
+          );
+        } else {
+          log.fine('No funds in BIP49 Liquid wallet, using BIP84');
         }
       }
 

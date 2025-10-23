@@ -10,9 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   bdk_flutter:
-    git:
-      url: https://github.com/LtbLightning/bdk-flutter
-      ref: ac8d102240a4242e319e71492d3698828177e97b
+    path: ../bdk-flutter
   cupertino_icons: ^1.0.2
   flutter_bloc: ^8.1.6
   freezed: ^3.0.0
@@ -167,5 +165,7 @@ dependency_overrides:
     path: ../bbqr-dart
   ark_wallet:
     path: ../dart-ark-wallet
+  bdk_flutter:
+    path: ../bdk-flutter
   flutter_rust_bridge: 2.11.1
 

@@ -91,11 +91,9 @@ packages:
   bdk_flutter:
     dependency: "direct main"
     description:
-      path: "."
-      ref: ac8d102240a4242e319e71492d3698828177e97b
-      resolved-ref: ac8d102240a4242e319e71492d3698828177e97b
-      url: "https://github.com/LtbLightning/bdk-flutter"
-    source: git
+      path: "../bdk-flutter"
+      relative: true
+    source: path
     version: "0.31.3"
   bech32:
     dependency: transitive

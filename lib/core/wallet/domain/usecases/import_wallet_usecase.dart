@@ -58,53 +58,39 @@ class ImportWalletUsecase {
       final liquidScriptTypes = [ScriptType.bip84, ScriptType.bip49];
 
       for (final liquidScriptType in liquidScriptTypes) {
-        Wallet? liquidWallet;
-        try {
-          liquidWallet = await _wallet.createWallet(
-            seed: seed,
-            network: liquidNetwork,
-            scriptType: liquidScriptType,
-            isDefault: false,
-            label: label,
-            sync: true,
+        final liquidWallet = await _wallet.createWallet(
+          seed: seed,
+          network: liquidNetwork,
+          scriptType: liquidScriptType,
+          isDefault: false,
+          label: label,
+          sync: true,
+        );
+
+        final hasFunds = liquidWallet.balanceSat > BigInt.zero;
+
+        // Only import the wallet if it has a non-zero balance
+        if (hasFunds) {
+          importedWallets.add(liquidWallet);
+          log.fine(
+            'Liquid wallet imported: ${liquidWallet.derivationPath} '
+            '(${liquidScriptType.name}, balance: ${liquidWallet.balanceSat})',
           );
 
-          // Only import the wallet if it has a non-zero balance
-          if (liquidWallet.balanceSat > BigInt.zero) {
-            importedWallets.add(liquidWallet);
-            log.fine(
-              'Liquid wallet imported: ${liquidWallet.derivationPath} '
-              '(${liquidScriptType.name}, balance: ${liquidWallet.balanceSat})',
-            );
-
-            // If this is a BIP49 wallet with funds, log a warning
-            if (liquidScriptType == ScriptType.bip49) {
-              log.warning(
-                'Imported legacy BIP49 Liquid wallet. '
-                'Consider migrating to BIP84 for lower transaction fees.',
-              );
-            }
-          } else {
-            // Delete empty wallet to avoid cluttering the database
-            await _wallet.deleteWallet(walletId: liquidWallet.id);
-            log.fine(
-              'Skipping empty Liquid wallet: ${liquidWallet.derivationPath} '
-              '(${liquidScriptType.name})',
+          // If this is a BIP49 wallet with funds, log a warning
+          if (liquidScriptType == ScriptType.bip49) {
+            log.warning(
+              'Imported legacy BIP49 Liquid wallet. '
+              'Consider migrating to BIP84 for lower transaction fees.',
             );
           }
-        } catch (e) {
-          log.warning(
-            'Failed to check Liquid wallet for ${liquidScriptType.name}: $e',
+        } else {
+          // Delete empty wallet to avoid cluttering the database
+          await _wallet.deleteWallet(walletId: liquidWallet.id);
+          log.fine(
+            'Skipping empty Liquid wallet: ${liquidWallet.derivationPath} '
+            '(${liquidScriptType.name})',
           );
-          // Clean up the wallet if it was created but failed later
-          if (liquidWallet != null) {
-            try {
-              await _wallet.deleteWallet(walletId: liquidWallet.id);
-            } catch (deleteError) {
-              log.warning('Failed to delete failed wallet: $deleteError');
-            }
-          }
-          // Continue checking other script types even if one fails
         }
       }
 
