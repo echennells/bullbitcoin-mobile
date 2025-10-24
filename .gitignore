@@ -101,3 +101,6 @@ today.md
 
 CLAUDE.md
 .zed/
+
+# Local helper scripts
+reset_and_run.sh
