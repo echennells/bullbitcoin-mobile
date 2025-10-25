@@ -52,9 +52,11 @@ packages:
   ark_wallet:
     dependency: "direct main"
     description:
-      path: "../dart-ark-wallet"
-      relative: true
-    source: path
+      path: "."
+      ref: c4ad1591b06e0ee5192b22312e44972036d4a072
+      resolved-ref: c4ad1591b06e0ee5192b22312e44972036d4a072
+      url: "https://github.com/SatoshiPortal/dart-ark-wallet"
+    source: git
     version: "0.0.1"
   async:
     dependency: "direct main"
@@ -91,9 +93,11 @@ packages:
   bdk_flutter:
     dependency: "direct main"
     description:
-      path: "../bdk-flutter"
-      relative: true
-    source: path
+      path: "."
+      ref: ac8d102240a4242e319e71492d3698828177e97b
+      resolved-ref: ac8d102240a4242e319e71492d3698828177e97b
+      url: "https://github.com/LtbLightning/bdk-flutter"
+    source: git
     version: "0.31.3"
   bech32:
     dependency: transitive
@@ -187,9 +191,10 @@ packages:
   boltz:
     dependency: "direct main"
     description:
-      path: "../boltz-dart"
-      relative: true
-    source: path
+      name: boltz
+      sha256: b30f54cdff157422e8969b990e24e0fa9445f9c719f1d4d5869e90b8064471cf
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.1"
   boolean_selector:
     dependency: transitive
@@ -291,10 +296,10 @@ packages:
     dependency: transitive
     description:
       name: camera
-      sha256: d6ec2cbdbe2fa8f5e0d07d8c06368fe4effa985a4a5ddade9cc58a8cd849557d
+      sha256: "87a27e0553e3432119c1c2f6e4b9a1bbf7d2c660552b910bfa59185a9facd632"
       url: "https://pub.dev"
     source: hosted
-    version: "0.11.2"
+    version: "0.11.2+1"
   camera_android_camerax:
     dependency: transitive
     description:
@@ -466,9 +471,11 @@ packages:
   dart_bbqr:
     dependency: "direct main"
     description:
-      path: "../bbqr-dart"
-      relative: true
-    source: path
+      path: "."
+      ref: "348feb8db3dd00260f17da9f7d850301cb899a87"
+      resolved-ref: "348feb8db3dd00260f17da9f7d850301cb899a87"
+      url: "https://github.com/SatoshiPortal/bbqr-dart.git"
+    source: git
     version: "0.0.1"
   dart_style:
     dependency: transitive
@@ -726,13 +733,13 @@ packages:
     source: hosted
     version: "2.0.31"
   flutter_rust_bridge:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: flutter_rust_bridge
-      sha256: "37ef40bc6f863652e865f0b2563ea07f0d3c58d8efad803cc01933a4b2ee067e"
+      sha256: "5a5c7a5deeef2cc2ffe6076a33b0429f4a20ceac22a397297aed2b1eb067e611"
       url: "https://pub.dev"
     source: hosted
-    version: "2.11.1"
+    version: "2.9.0"
   flutter_secure_storage:
     dependency: "direct main"
     description:
@@ -1104,10 +1111,10 @@ packages:
     dependency: transitive
     description:
       name: image_picker_platform_interface
-      sha256: "9f143b0dba3e459553209e20cc425c9801af48e6dfa4f01a0fcf927be3f41665"
+      sha256: "567e056716333a1647c64bb6bd873cff7622233a5c3f694be28a583d4715690c"
       url: "https://pub.dev"
     source: hosted
-    version: "2.11.0"
+    version: "2.11.1"
   image_picker_windows:
     dependency: transitive
     description:
@@ -1253,10 +1260,11 @@ packages:
   lwk:
     dependency: "direct main"
     description:
-      path: "../lwk-dart"
-      relative: true
-    source: path
-    version: "0.2.2"
+      name: lwk
+      sha256: e9c790d2e6d10fa672838651951d6f0a853ea8b726acf3af7c54d9a2e712f95e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   matcher:
     dependency: transitive
     description:
@@ -1428,9 +1436,11 @@ packages:
   payjoin_flutter:
     dependency: "direct main"
     description:
-      path: "../payjoin-flutter"
-      relative: true
-    source: path
+      path: "."
+      ref: "322b61b9074be2c0170e44e589f6552917e58a2e"
+      resolved-ref: "322b61b9074be2c0170e44e589f6552917e58a2e"
+      url: "https://github.com/DanGould/payjoin-flutter"
+    source: git
     version: "0.23.0"
   permission_handler:
     dependency: "direct main"
