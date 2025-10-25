@@ -48,8 +48,8 @@ class ImportWalletUsecase {
         network: bitcoinNetwork,
         scriptType: scriptType,
         isDefault: false,
+        sync: false,
         label: label,
-        sync: true,
       );
       importedWallets.add(bitcoinWallet);
       log.fine('Bitcoin wallet imported: ${bitcoinWallet.derivationPath}');
@@ -61,8 +61,8 @@ class ImportWalletUsecase {
         network: liquidNetwork,
         scriptType: ScriptType.bip49,
         isDefault: false,
+        sync: false,
         label: label,
-        sync: true,
       );
 
       final hasFunds = testBip49Wallet.balanceSat > BigInt.zero;
@@ -87,8 +87,8 @@ class ImportWalletUsecase {
         network: liquidNetwork,
         scriptType: liquidScriptType,
         isDefault: false,
+        sync: false,
         label: label,
-        sync: true,
       );
       importedWallets.add(liquidWallet);
       log.fine('Liquid wallet imported: ${liquidWallet.derivationPath}');
