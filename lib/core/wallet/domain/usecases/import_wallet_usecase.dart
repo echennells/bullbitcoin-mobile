@@ -4,19 +4,23 @@ import 'package:bb_mobile/core/settings/data/settings_repository.dart';
 import 'package:bb_mobile/core/utils/logger.dart';
 import 'package:bb_mobile/core/wallet/data/repositories/wallet_repository.dart';
 import 'package:bb_mobile/core/wallet/domain/entities/wallet.dart';
+import 'package:bb_mobile/core/wallet/domain/usecases/detect_liquid_script_type_usecase.dart';
 
 class ImportWalletUsecase {
   final SeedRepository _seedRepository;
   final SettingsRepository _settingsRepository;
   final WalletRepository _wallet;
+  final DetectLiquidScriptTypeUsecase _detectLiquidScriptTypeUsecase;
 
   ImportWalletUsecase({
     required SeedRepository seedRepository,
     required SettingsRepository settingsRepository,
     required WalletRepository walletRepository,
+    required DetectLiquidScriptTypeUsecase detectLiquidScriptTypeUsecase,
   }) : _seedRepository = seedRepository,
        _settingsRepository = settingsRepository,
-       _wallet = walletRepository;
+       _wallet = walletRepository,
+       _detectLiquidScriptTypeUsecase = detectLiquidScriptTypeUsecase;
 
   Future<List<Wallet>> execute({
     required List<String> mnemonicWords,
@@ -55,31 +59,10 @@ class ImportWalletUsecase {
       log.fine('Bitcoin wallet imported: ${bitcoinWallet.derivationPath}');
 
       // For Liquid, check if user has legacy BIP49 (Aqua) funds
-      ScriptType liquidScriptType = ScriptType.bip84;
-      final testBip49Wallet = await _wallet.createWallet(
+      final liquidScriptType = await _detectLiquidScriptTypeUsecase.execute(
         seed: seed,
         network: liquidNetwork,
-        scriptType: ScriptType.bip49,
-        isDefault: false,
-        sync: false,
-        label: label,
       );
-
-      final hasFunds = testBip49Wallet.balanceSat > BigInt.zero;
-      await _wallet.deleteWallet(walletId: testBip49Wallet.id);
-
-      if (hasFunds) {
-        liquidScriptType = ScriptType.bip49;
-        log.fine(
-          'Detected BIP49 Liquid wallet with balance: ${testBip49Wallet.balanceSat}',
-        );
-        log.warning(
-          'Importing legacy BIP49 Liquid wallet (Aqua compatibility). '
-          'Consider migrating to BIP84 for lower transaction fees.',
-        );
-      } else {
-        log.fine('No funds in BIP49 Liquid wallet, using BIP84');
-      }
 
       // Create Liquid wallet with determined script type
       final liquidWallet = await _wallet.createWallet(
