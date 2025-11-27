@@ -47,10 +47,18 @@ class DescriptorDerivation {
     required ScriptType scriptType,
     required bool isTestnet,
   }) async {
+    // Map ScriptType to lwk ScriptVariant
+    final lwk.ScriptVariant scriptVariant = switch (scriptType) {
+      ScriptType.bip84 => lwk.ScriptVariant.wpkh,
+      ScriptType.bip49 => lwk.ScriptVariant.shWpkh,
+      ScriptType.bip44 => throw UnimplementedError('BIP44 not supported for Liquid'),
+    };
+
     final lwk.Descriptor confidentialDescriptor = await lwk
-        .Descriptor.newConfidential(
+        .Descriptor.newConfidentialWithScript(
       network: isTestnet ? lwk.Network.testnet : lwk.Network.mainnet,
       mnemonic: mnemonic,
+      scriptVariant: scriptVariant,
     );
 
     return confidentialDescriptor.ctDescriptor;
