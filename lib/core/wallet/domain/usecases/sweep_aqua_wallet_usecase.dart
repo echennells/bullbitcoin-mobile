@@ -64,6 +64,7 @@ class SweepAquaWalletUsecase {
       log.info('Wallet scriptType: ${bip84Wallet.scriptType}');
       log.info('Wallet network: ${bip84Wallet.network}');
       log.info('Wallet masterFingerprint: ${bip84Wallet.masterFingerprint}');
+      log.info('BIP84 wallet descriptor: ${bip84Wallet.externalPublicDescriptor}');
 
       if (!bip84Wallet.isLiquid) {
         log.severe('Wallet is not a Liquid wallet');
@@ -129,13 +130,22 @@ class SweepAquaWalletUsecase {
       );
 
       // Get a receive address from the BIP84 wallet
+      log.info('Getting receive address from BIP84 wallet ID: ${bip84Wallet.id}');
       final receiveAddress = await _getReceiveAddressUsecase.execute(
         walletId: bip84Wallet.id,
       );
 
       log.info('Sweeping to address: ${receiveAddress.address}');
+      log.info('Receive address wallet ID: ${receiveAddress.walletId}');
 
       // Build a drain transaction from BIP49 to BIP84
+      log.info('Building PSET:');
+      log.info('  From wallet: ${bip49Wallet.id}');
+      log.info('  To address: ${receiveAddress.address}');
+      log.info('  Address belongs to wallet: ${receiveAddress.walletId}');
+      log.info('  BIP84 wallet ID (should match): ${bip84Wallet.id}');
+      log.info('  Drain: true');
+
       final pset = await _liquidWalletRepository.buildPset(
         walletId: bip49Wallet.id,
         address: receiveAddress.address,
@@ -145,6 +155,7 @@ class SweepAquaWalletUsecase {
       );
 
       log.info('Built PSET for sweep transaction');
+      log.info('PSET details: ${pset.substring(0, 100)}...');
 
       // Sign the transaction
       final signedPset = await _signLiquidTxUsecase.execute(
@@ -155,11 +166,25 @@ class SweepAquaWalletUsecase {
       log.info('Signed PSET');
 
       // Broadcast the transaction
+      log.info('Broadcasting signed PSET...');
       final txId = await _broadcastLiquidTransactionUsecase.execute(signedPset);
 
       log.info('Sweep transaction broadcast successfully: $txId');
+      log.info('Transaction should send $finalBalance sats from:');
+      log.info('  Source: BIP49 wallet ${bip49Wallet.id}');
+      log.info('  Destination: ${receiveAddress.address}');
+      log.info('  Destination wallet: ${receiveAddress.walletId}');
+      log.info('  Expected destination: BIP84 wallet ${bip84Wallet.id}');
 
       // Clean up the temporary BIP49 wallet
+      log.info('Checking BIP49 wallet balance before deletion...');
+      final bip49WalletAfterSweep = await _walletRepository.getWallet(bip49Wallet.id, sync: true);
+      log.info('BIP49 wallet balance after sweep: ${bip49WalletAfterSweep?.balanceSat ?? 0} sats (should be 0)');
+
+      log.info('Checking BIP84 wallet balance after sweep...');
+      final bip84WalletAfterSweep = await _walletRepository.getWallet(bip84Wallet.id, sync: true);
+      log.info('BIP84 wallet balance after sweep: ${bip84WalletAfterSweep?.balanceSat ?? 0} sats (should have increased)');
+
       await _walletRepository.deleteWallet(walletId: bip49Wallet.id);
       log.info('Deleted temporary BIP49 wallet');
 
