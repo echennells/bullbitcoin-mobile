@@ -107,11 +107,11 @@ class SweepAquaWalletUsecase {
 
       // Double-check by manually syncing again and re-fetching balance
       log.info('Manually triggering another sync to double-check...');
-      await _walletRepository.syncWallet(walletId: bip49Wallet.id);
+      await _walletRepository.sync(bip49Wallet);
       log.info('Manual sync completed');
 
       // Re-fetch the wallet to get updated balance
-      final updatedBip49Wallet = await _walletRepository.getWallet(bip49Wallet.id);
+      final updatedBip49Wallet = await _walletRepository.getWallet(bip49Wallet.id, sync: false);
       log.info('Re-fetched wallet balance: ${updatedBip49Wallet?.balanceSat ?? BigInt.zero} sats');
 
       final finalBalance = updatedBip49Wallet?.balanceSat ?? bip49Wallet.balanceSat;
