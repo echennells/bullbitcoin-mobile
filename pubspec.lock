@@ -1287,9 +1287,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: bca8468df1b02fcd56539b3a414395010445602b
-      resolved-ref: bca8468df1b02fcd56539b3a414395010445602b
-      url: "https://github.com/SatoshiPortal/lwk-dart"
+      ref: c8dd1e4
+      resolved-ref: c8dd1e459b289b3f7c6eeeb5761566bcef2ffeae
+      url: "https://github.com/echennells/lwk-dart"
     source: git
     version: "0.2.2"
   matcher:

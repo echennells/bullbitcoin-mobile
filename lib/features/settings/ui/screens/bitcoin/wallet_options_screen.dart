@@ -50,6 +50,17 @@ class WalletOptionsScreen extends StatelessWidget {
                               );
                             },
                           ),
+                          if (wallet.isLiquid && wallet.scriptType == ScriptType.bip84)
+                            SettingsEntryItem(
+                              icon: Icons.sync_alt,
+                              title: 'Sweep from Aqua Wallet',
+                              onTap: () {
+                                context.pushNamed(
+                                  SettingsRoute.sweepAquaWallet.name,
+                                  pathParameters: {'walletId': walletId},
+                                );
+                              },
+                            ),
                         ],
                       ),
                     ),

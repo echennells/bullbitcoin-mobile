@@ -1,3 +1,4 @@
+import 'package:bb_mobile/core/blockchain/domain/usecases/broadcast_liquid_transaction_usecase.dart';
 import 'package:bb_mobile/core/electrum/application/usecases/get_electrum_servers_to_use_usecase.dart';
 import 'package:bb_mobile/core/labels/data/label_datasource.dart';
 import 'package:bb_mobile/core/seed/data/datasources/seed_datasource.dart';
@@ -32,12 +33,14 @@ import 'package:bb_mobile/core/wallet/domain/usecases/get_wallet_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/get_wallet_utxos_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/get_wallets_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/import_wallet_usecase.dart';
+import 'package:bb_mobile/core/wallet/domain/usecases/sweep_aqua_wallet_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/sync_wallet_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/watch_finished_wallet_syncs_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/watch_started_wallet_syncs_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/watch_wallet_transaction_by_address_usecase.dart';
 import 'package:bb_mobile/core/wallet/domain/usecases/watch_wallet_transaction_by_tx_id_usecase.dart';
 import 'package:bb_mobile/core/wallet/interface_adapters/electrum_server_adapter.dart';
+import 'package:bb_mobile/features/send/domain/usecases/sign_liquid_tx_usecase.dart';
 import 'package:get_it/get_it.dart';
 
 class WalletLocator {
@@ -225,6 +228,17 @@ class WalletLocator {
     );
     locator.registerFactory<SyncWalletUsecase>(
       () => SyncWalletUsecase(walletRepository: locator<WalletRepository>()),
+    );
+    locator.registerFactory<SweepAquaWalletUsecase>(
+      () => SweepAquaWalletUsecase(
+        walletRepository: locator<WalletRepository>(),
+        liquidWalletRepository: locator<LiquidWalletRepository>(),
+        seedRepository: locator<SeedRepository>(),
+        signLiquidTxUsecase: locator<SignLiquidTxUsecase>(),
+        broadcastLiquidTransactionUsecase:
+            locator<BroadcastLiquidTransactionUsecase>(),
+        getReceiveAddressUsecase: locator<GetReceiveAddressUsecase>(),
+      ),
     );
   }
 }

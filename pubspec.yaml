@@ -60,8 +60,8 @@ dependencies:
       ref: 9bd530462e9638d6088bc6998bebc0dd76dde1ca
   lwk:
     git:
-      url: https://github.com/SatoshiPortal/lwk-dart
-      ref: bca8468df1b02fcd56539b3a414395010445602b
+      url: https://github.com/echennells/lwk-dart
+      ref: feature/bip49-support
   json_annotation: ^4.9.0
   flutter_localizations:
     sdk: flutter
@@ -177,3 +177,9 @@ flutter_launcher_icons:
   min_sdk_android: 21 # android min sdk min:16, default 21
   adaptive_icon_background: "#FBFBFB"
   adaptive_icon_foreground: "assets/misc/iconnew-red.png"
+
+dependency_overrides:
+  lwk:
+    git:
+      url: https://github.com/echennells/lwk-dart
+      ref: c8dd1e4
