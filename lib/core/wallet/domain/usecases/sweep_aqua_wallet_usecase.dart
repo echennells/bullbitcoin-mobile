@@ -2,6 +2,7 @@ import 'package:bb_mobile/core/blockchain/domain/usecases/broadcast_liquid_trans
 import 'package:bb_mobile/core/errors/bull_exception.dart';
 import 'package:bb_mobile/core/fees/domain/fees_entity.dart';
 import 'package:bb_mobile/core/seed/data/repository/seed_repository.dart';
+import 'package:bb_mobile/core/seed/domain/entity/seed.dart';
 import 'package:bb_mobile/core/utils/logger.dart';
 import 'package:bb_mobile/core/wallet/data/repositories/liquid_wallet_repository.dart';
 import 'package:bb_mobile/core/wallet/data/repositories/wallet_repository.dart';
@@ -79,7 +80,8 @@ class SweepAquaWalletUsecase {
       // Get the seed for this wallet
       log.info('Getting seed for masterFingerprint: ${bip84Wallet.masterFingerprint}');
       final seed = await _seedRepository.get(bip84Wallet.masterFingerprint);
-      log.info('Got seed, mnemonic length: ${seed.mnemonic.split(' ').length} words');
+      final seedType = seed is MnemonicSeed ? 'mnemonic (${seed.mnemonicWords.length} words)' : 'bytes';
+      log.info('Got seed, type: $seedType');
 
       log.info('Creating temporary BIP49 wallet to check for Aqua funds...');
 
