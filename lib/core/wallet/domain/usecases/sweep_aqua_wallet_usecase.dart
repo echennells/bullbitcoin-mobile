@@ -85,37 +85,35 @@ class SweepAquaWalletUsecase {
       log.info('Got seed, type: $seedType');
 
       log.info('Creating temporary BIP49 wallet to check for Aqua funds...');
-      log.info('Will sync: true');
+      log.info('Creating WITHOUT sync to keep invisible to UI layer');
 
       final startTime = DateTime.now();
-      // Create a temporary BIP49 wallet from the same seed
+      // Create a temporary BIP49 wallet WITHOUT syncing
+      // This prevents WalletSyncFinished event from firing and keeps wallet invisible to UI
       final bip49Wallet = await _walletRepository.createWallet(
         seed: seed,
         network: bip84Wallet.network,
         scriptType: ScriptType.bip49,
         isDefault: false,
-        sync: true, // Must sync to detect on-chain funds
+        sync: false, // ✅ Don't sync! Prevents UI from seeing this wallet
       );
-      final syncDuration = DateTime.now().difference(startTime);
-
       log.info('BIP49 wallet created with ID: ${bip49Wallet.id}');
-      log.info('Creation + sync took: ${syncDuration.inMilliseconds}ms');
-      log.info('BIP49 wallet balance: ${bip49Wallet.balanceSat} sats');
+      log.info('Wallet is invisible to UI layer - no sync event triggered');
       log.info('BIP49 wallet scriptType: ${bip49Wallet.scriptType}');
       log.info('BIP49 wallet network: ${bip49Wallet.network}');
       log.info('BIP49 wallet xpub: ${bip49Wallet.xpub}');
       log.info('BIP49 wallet externalDescriptor: ${bip49Wallet.externalPublicDescriptor}');
 
-      // Double-check by manually syncing again and re-fetching balance
-      log.info('Manually triggering another sync to double-check...');
+      // Manually sync the wallet using direct repository call (bypasses event streams)
+      log.info('Manually syncing BIP49 wallet (bypasses UI layer)...');
       await _walletRepository.sync(bip49Wallet);
-      log.info('Manual sync completed');
+      final syncDuration = DateTime.now().difference(startTime);
+      log.info('Manual sync completed in ${syncDuration.inMilliseconds}ms');
 
-      // Re-fetch the wallet to get updated balance
+      // Manually get balance using direct repository call (bypasses event streams)
       final updatedBip49Wallet = await _walletRepository.getWallet(bip49Wallet.id, sync: false);
-      log.info('Re-fetched wallet balance: ${updatedBip49Wallet?.balanceSat ?? BigInt.zero} sats');
-
-      final finalBalance = updatedBip49Wallet?.balanceSat ?? bip49Wallet.balanceSat;
+      final finalBalance = updatedBip49Wallet?.balanceSat ?? BigInt.zero;
+      log.info('BIP49 wallet balance: $finalBalance sats');
 
       // Check if there are any funds to sweep
       if (finalBalance == BigInt.zero) {
@@ -178,15 +176,18 @@ class SweepAquaWalletUsecase {
 
       // Clean up the temporary BIP49 wallet
       log.info('Checking BIP49 wallet balance before deletion...');
-      final bip49WalletAfterSweep = await _walletRepository.getWallet(bip49Wallet.id, sync: true);
+      // Manually sync to get updated balance (bypasses UI layer)
+      await _walletRepository.sync(bip49Wallet);
+      final bip49WalletAfterSweep = await _walletRepository.getWallet(bip49Wallet.id, sync: false);
       log.info('BIP49 wallet balance after sweep: ${bip49WalletAfterSweep?.balanceSat ?? 0} sats (should be 0)');
 
       log.info('Checking BIP84 wallet balance after sweep...');
+      // For BIP84, we DO want to trigger a sync event so UI updates
       final bip84WalletAfterSweep = await _walletRepository.getWallet(bip84Wallet.id, sync: true);
       log.info('BIP84 wallet balance after sweep: ${bip84WalletAfterSweep?.balanceSat ?? 0} sats (should have increased)');
 
       await _walletRepository.deleteWallet(walletId: bip49Wallet.id);
-      log.info('Deleted temporary BIP49 wallet');
+      log.info('Deleted temporary BIP49 wallet (never appeared in UI)');
 
       log.info('=== SWEEP AQUA WALLET END (success) ===');
       log.info('Successfully swept $finalBalance sats');
