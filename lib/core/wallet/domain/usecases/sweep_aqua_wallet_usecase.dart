@@ -84,7 +84,9 @@ class SweepAquaWalletUsecase {
       log.info('Got seed, type: $seedType');
 
       log.info('Creating temporary BIP49 wallet to check for Aqua funds...');
+      log.info('Will sync: true');
 
+      final startTime = DateTime.now();
       // Create a temporary BIP49 wallet from the same seed
       final bip49Wallet = await _walletRepository.createWallet(
         seed: seed,
@@ -93,14 +95,29 @@ class SweepAquaWalletUsecase {
         isDefault: false,
         sync: true, // Must sync to detect on-chain funds
       );
+      final syncDuration = DateTime.now().difference(startTime);
 
       log.info('BIP49 wallet created with ID: ${bip49Wallet.id}');
+      log.info('Creation + sync took: ${syncDuration.inMilliseconds}ms');
       log.info('BIP49 wallet balance: ${bip49Wallet.balanceSat} sats');
       log.info('BIP49 wallet scriptType: ${bip49Wallet.scriptType}');
       log.info('BIP49 wallet network: ${bip49Wallet.network}');
+      log.info('BIP49 wallet xpub: ${bip49Wallet.xpub}');
+      log.info('BIP49 wallet externalDescriptor: ${bip49Wallet.externalPublicDescriptor}');
+
+      // Double-check by manually syncing again and re-fetching balance
+      log.info('Manually triggering another sync to double-check...');
+      await _walletRepository.syncWallet(walletId: bip49Wallet.id);
+      log.info('Manual sync completed');
+
+      // Re-fetch the wallet to get updated balance
+      final updatedBip49Wallet = await _walletRepository.getWallet(bip49Wallet.id);
+      log.info('Re-fetched wallet balance: ${updatedBip49Wallet?.balanceSat ?? BigInt.zero} sats');
+
+      final finalBalance = updatedBip49Wallet?.balanceSat ?? bip49Wallet.balanceSat;
 
       // Check if there are any funds to sweep
-      if (bip49Wallet.balanceSat == BigInt.zero) {
+      if (finalBalance == BigInt.zero) {
         log.info('No funds found in BIP49 wallet, deleting temporary wallet');
         await _walletRepository.deleteWallet(walletId: bip49Wallet.id);
         log.info('=== SWEEP AQUA WALLET END (no funds) ===');
@@ -108,7 +125,7 @@ class SweepAquaWalletUsecase {
       }
 
       log.info(
-        'Found ${bip49Wallet.balanceSat} sats in BIP49 wallet. Starting sweep...',
+        'Found $finalBalance sats in BIP49 wallet. Starting sweep...',
       );
 
       // Get a receive address from the BIP84 wallet
@@ -147,14 +164,14 @@ class SweepAquaWalletUsecase {
       log.info('Deleted temporary BIP49 wallet');
 
       log.info('=== SWEEP AQUA WALLET END (success) ===');
-      log.info('Successfully swept ${bip49Wallet.balanceSat} sats');
+      log.info('Successfully swept $finalBalance sats');
       log.info('Transaction ID: $txId');
 
       return SweepResult(
         success: true,
         txId: txId,
-        amountSwept: bip49Wallet.balanceSat,
-        message: 'Successfully swept ${bip49Wallet.balanceSat} sats from Aqua wallet',
+        amountSwept: finalBalance,
+        message: 'Successfully swept $finalBalance sats from Aqua wallet',
       );
     } catch (e, stackTrace) {
       log.severe('=== SWEEP AQUA WALLET ERROR ===');
