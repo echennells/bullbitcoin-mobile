@@ -46,25 +46,40 @@ class SweepAquaWalletUsecase {
     required NetworkFee networkFee,
   }) async {
     try {
+      log.info('=== SWEEP AQUA WALLET START ===');
+      log.info('liquidWalletId: $liquidWalletId');
+      log.info('networkFee: $networkFee');
+
       // Get the current BIP84 Liquid wallet
       final bip84Wallet = await _walletRepository.getWallet(liquidWalletId);
+      log.info('Got BIP84 wallet: ${bip84Wallet?.id}');
 
       if (bip84Wallet == null) {
+        log.severe('Wallet not found for ID: $liquidWalletId');
         throw SweepAquaWalletException('Wallet not found');
       }
 
+      log.info('Wallet isLiquid: ${bip84Wallet.isLiquid}');
+      log.info('Wallet scriptType: ${bip84Wallet.scriptType}');
+      log.info('Wallet network: ${bip84Wallet.network}');
+      log.info('Wallet masterFingerprint: ${bip84Wallet.masterFingerprint}');
+
       if (!bip84Wallet.isLiquid) {
+        log.severe('Wallet is not a Liquid wallet');
         throw SweepAquaWalletException('Wallet must be a Liquid wallet');
       }
 
       if (bip84Wallet.scriptType != ScriptType.bip84) {
+        log.severe('Wallet scriptType is ${bip84Wallet.scriptType}, expected bip84');
         throw SweepAquaWalletException(
           'Wallet must be BIP84. Current type: ${bip84Wallet.scriptType}',
         );
       }
 
       // Get the seed for this wallet
+      log.info('Getting seed for masterFingerprint: ${bip84Wallet.masterFingerprint}');
       final seed = await _seedRepository.get(bip84Wallet.masterFingerprint);
+      log.info('Got seed, mnemonic length: ${seed.mnemonic.split(' ').length} words');
 
       log.info('Creating temporary BIP49 wallet to check for Aqua funds...');
 
@@ -77,12 +92,16 @@ class SweepAquaWalletUsecase {
         sync: true, // Must sync to detect on-chain funds
       );
 
+      log.info('BIP49 wallet created with ID: ${bip49Wallet.id}');
       log.info('BIP49 wallet balance: ${bip49Wallet.balanceSat} sats');
+      log.info('BIP49 wallet scriptType: ${bip49Wallet.scriptType}');
+      log.info('BIP49 wallet network: ${bip49Wallet.network}');
 
       // Check if there are any funds to sweep
       if (bip49Wallet.balanceSat == BigInt.zero) {
-        log.info('No funds found in BIP49 wallet');
+        log.info('No funds found in BIP49 wallet, deleting temporary wallet');
         await _walletRepository.deleteWallet(walletId: bip49Wallet.id);
+        log.info('=== SWEEP AQUA WALLET END (no funds) ===');
         return SweepResult(success: false, message: 'No Aqua funds found');
       }
 
@@ -123,6 +142,11 @@ class SweepAquaWalletUsecase {
 
       // Clean up the temporary BIP49 wallet
       await _walletRepository.deleteWallet(walletId: bip49Wallet.id);
+      log.info('Deleted temporary BIP49 wallet');
+
+      log.info('=== SWEEP AQUA WALLET END (success) ===');
+      log.info('Successfully swept ${bip49Wallet.balanceSat} sats');
+      log.info('Transaction ID: $txId');
 
       return SweepResult(
         success: true,
@@ -130,8 +154,10 @@ class SweepAquaWalletUsecase {
         amountSwept: bip49Wallet.balanceSat,
         message: 'Successfully swept ${bip49Wallet.balanceSat} sats from Aqua wallet',
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      log.severe('=== SWEEP AQUA WALLET ERROR ===');
       log.severe('Error sweeping Aqua wallet: $e');
+      log.severe('Stack trace: $stackTrace');
       throw SweepAquaWalletException(e.toString());
     }
   }
