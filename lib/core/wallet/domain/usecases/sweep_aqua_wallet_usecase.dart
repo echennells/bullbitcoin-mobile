@@ -45,6 +45,7 @@ class SweepAquaWalletUsecase {
   Future<SweepResult> execute({
     required String liquidWalletId,
     required NetworkFee networkFee,
+    bool checkOnly = false,
   }) async {
     try {
       log.info('=== SWEEP AQUA WALLET START ===');
@@ -124,8 +125,22 @@ class SweepAquaWalletUsecase {
       }
 
       log.info(
-        'Found $finalBalance sats in BIP49 wallet. Starting sweep...',
+        'Found $finalBalance sats in BIP49 wallet.',
       );
+
+      // If checkOnly mode, return the balance without sweeping
+      if (checkOnly) {
+        log.info('Check-only mode: deleting temporary wallet and returning balance');
+        await _walletRepository.deleteWallet(walletId: bip49Wallet.id);
+        log.info('=== SWEEP AQUA WALLET END (check only) ===');
+        return SweepResult(
+          success: true,
+          amountSwept: finalBalance,
+          message: 'Found $finalBalance sats available to sweep',
+        );
+      }
+
+      log.info('Starting sweep...');
 
       // Get a receive address from the BIP84 wallet
       log.info('Getting receive address from BIP84 wallet ID: ${bip84Wallet.id}');
